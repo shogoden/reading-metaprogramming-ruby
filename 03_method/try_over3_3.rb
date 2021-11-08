@@ -111,6 +111,10 @@ end
 # TryOver3::TaskHelper という include すると task というクラスマクロが与えられる以下のようなモジュールがあります。
 module TryOver3::TaskHelper
   def self.included(klass)
+    klass.define_singleton_method :foo do
+      "foo"
+    end
+    
     klass.define_singleton_method :task do |name, &task_block|
       new_klass = Class.new do
         define_singleton_method :run do
@@ -121,8 +125,26 @@ module TryOver3::TaskHelper
         end
       end
       new_klass_name = name.to_s.split("_").map{ |w| w[0] = w[0].upcase; w }.join
-      const_set(new_klass_name, new_klass)
+      unless new_klass_name == "Foo"
+        const_set(new_klass_name, new_klass)
+      end
     end
+
+    def klass.const_missing(arg)
+      if arg == :Foo
+        self.class.const_set(arg, 
+          Class.new {
+            def self.run
+              warn "Warning: TryOver3::A5Task::Foo.run is deprecated"
+              "foo"
+            end
+          }
+        )
+      else
+        raise NameError
+      end
+    end
+
   end
 end
 
